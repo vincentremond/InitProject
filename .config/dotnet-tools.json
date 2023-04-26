@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "fantomas": {
+      "version": "6.0.1",
+      "commands": [
+        "fantomas"
+      ]
+    },
+    "paket": {
+      "version": "7.2.1",
+      "commands": [
+        "paket"
+      ]
+    }
+  }
+}

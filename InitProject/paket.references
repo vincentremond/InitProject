@@ -1,0 +1,6 @@
+group Console
+Fake.Core.CommandLineParsing
+Fake.Core.Trace
+Fake.Core.Target
+Fake.Tools.Git
+Fake.DotNet.Cli
