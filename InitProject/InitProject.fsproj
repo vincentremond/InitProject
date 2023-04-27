@@ -4,6 +4,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
     <WarningsAsErrors>FS0025</WarningsAsErrors>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>InitProject</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="paket.references" />

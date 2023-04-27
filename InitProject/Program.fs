@@ -1,9 +1,16 @@
 ﻿open Fake.Core
 open InitProject
 
-[]
-|> Context.FakeExecutionContext.Create false "InitProject.exe"
-|> Context.RuntimeContext.Fake
-|> Context.setExecutionContext
+[<EntryPoint>]
+let main args =
+    
+    let initProjectContext = args |> Cli.parse |>  InitProjectContext.fromCliArguments
+    
+    []
+    |> Context.FakeExecutionContext.Create false "InitProject.exe"
+    |> Context.RuntimeContext.Fake
+    |> Context.setExecutionContext
 
-Initializer.init () |> Target.runOrDefault
+    Initializer.init initProjectContext |> Target.runOrDefault
+
+    0

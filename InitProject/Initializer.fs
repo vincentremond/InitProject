@@ -9,8 +9,7 @@ module Initializer =
 
     let steps =
         [
-          // nameof ``dotnet: Update new template``, ``dotnet: Update new template``
-          nameof ``TEMP: Clean target directory``, ``TEMP: Clean target directory``
+          nameof ``dotnet: Update new template``, ``dotnet: Update new template``
           nameof ``io: Create target directory``, ``io: Create target directory``
           nameof ``git: Init repository``, ``git: Init repository``
           nameof ``Add .gitignore``, ``Add .gitignore``
@@ -29,11 +28,11 @@ module Initializer =
           nameof ``Create .build folder to sln``, ``Create .build folder to sln``
           nameof ``Open rider``, ``Open rider`` ]
 
-    let init () =
-        steps |> List.iter (fun (name, step) -> Target.create name step)
+    let init context =
+        steps |> List.iter (fun (name, step) -> Target.create name (step context))
 
         steps
         |> List.map fst
         |> List.pairwise
-        |> List.map (fun (a, b) -> a ==> b)
+        |> List.map (fun (stepNameA, stepNameB) -> stepNameA ==> stepNameB)
         |> List.last

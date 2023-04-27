@@ -1,17 +1,45 @@
 ﻿namespace InitProject
 
-[<RequireQualifiedAccess>]
-module InitProjectContext =
+open Fake.IO.FileSystemOperators
 
-    let private arguments = System.Environment.GetCommandLineArgs() |> Array.skip 1
+type SolutionFile =
+    { Name: string
+      Folder: string
+      File: string }
 
-    let private commandLineArguments = Cli.parse arguments
+type InitProjectContext =
+    { TargetFolder: string
+      ProjectName: string }
+    
+    // get properties
+    member this.Solution =
+        {
+            Name = this.ProjectName
+            Folder = this.TargetFolder
+            File = this.TargetFolder </> $"{this.ProjectName}.sln"
+        }
 
-    let targetFolder, ProjectName =
+    member this.MainProject =
+        {
+            Name = this.ProjectName
+            Folder = this.TargetFolder </> this.ProjectName
+            File = this.TargetFolder </> this.ProjectName </> $"{this.ProjectName}.fsproj"
+        }
+    
+    member this.TestProject =
+        {
+            Name = $"{this.ProjectName}.Tests"
+            Folder = this.TargetFolder </> $"{this.ProjectName}.Tests"
+            File = this.TargetFolder </> $"{this.ProjectName}.Tests" </> $"{this.ProjectName}.Tests.fsproj"
+        }
+        
+    static member fromCliArguments commandLineArguments =
         let target =
             match commandLineArguments.Destination with
             | Some destination -> destination
             | None -> System.Environment.CurrentDirectory
 
         let info = System.IO.DirectoryInfo(target)
-        (info.FullName, info.Name)
+
+        { TargetFolder = info.FullName
+          ProjectName = info.Name }

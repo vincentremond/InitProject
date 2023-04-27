@@ -2,25 +2,29 @@
 
 open Fake.Core
 
+type CliArguments = { Destination: string option }
+
 [<RequireQualifiedAccess>]
 module Cli =
 
     let private cli =
         """
-usage: InitProject.exe --destination=<destination>
+InitProject
 
---destination=<destination>  Target destination, if not set current directory will be used
+Usage:
+    InitProject.exe
+    InitProject.exe <destination>
+    InitProject.exe --destination <destination>
 """
 
-    type Arguments = { Destination: string option }
-
+    
     let parse args =
         let parsedArguments = args |> Seq.toArray |> Docopt(cli).Parse
 
         printfn $"Parsed arguments: %A{parsedArguments}"
 
         let destination =
-            match parsedArguments |> Map.tryFind "--destination" with
+            match parsedArguments |> Map.tryFind "<destination>" with
             | Some(Argument s) -> Some s
             | Some other -> failwithf $"Unexpected argument type: %A{other}"
             | _ -> None
