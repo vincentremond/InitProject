@@ -152,7 +152,7 @@ module Steps =
               "fsharp_multiline_block_brackets_on_same_column = true"
               "fsharp_experimental_stroustrup_style = true" ]
 
-        DotNetCli.exec "fantomas" [ "."; "--recurse" ]
+        DotNetCli.exec "fantomas" [ "." ]
 
     let ``Create .build folder to sln`` (initProjectContext: InitProjectContext) _ =
         let folderProjectTypeGuid =
