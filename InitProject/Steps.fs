@@ -134,7 +134,13 @@ module Steps =
     let ``Add paket.references and enable FS0025 warning to projects`` (_: InitProjectContext) _ =
         let fixFsProj (path: string) =
             let xDoc = path |> XDocument.Load
-            xDoc.Root.Element("PropertyGroup").Add(XElement("WarningsAsErrors", "FS0025"))
+            let propertyGroup = xDoc.Root.Element("PropertyGroup")
+            
+            // FS0025: Incomplete pattern matches on this expression
+            propertyGroup.Add(XElement("WarningsAsErrors", "FS0025"))
+            
+            // Disable AppendTargetFrameworkToOutputPath to allow simpler paths (for example for shortcuts)
+            propertyGroup.Add(XElement("AppendTargetFrameworkToOutputPath", false))
 
             xDoc.Root
                 .Element("ItemGroup")
@@ -149,8 +155,7 @@ module Steps =
         File.writeNew
             (initProjectContext.Solution.Folder </> ".editorconfig")
             [ "[*.{fs,fsx}]"
-              "fsharp_multiline_block_brackets_on_same_column = true"
-              "fsharp_experimental_stroustrup_style = true" ]
+              "fsharp_multiline_bracket_style = Stroustrup" ]
 
         DotNetCli.exec "fantomas" [ "." ]
 
