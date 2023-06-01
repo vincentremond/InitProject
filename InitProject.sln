@@ -6,8 +6,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{B443A3
 	ProjectSection(SolutionItems) = preProject
 		paket.dependencies = paket.dependencies
 		README.md = README.md
-		install.ps1 = install.ps1
 		.gitignore = .gitignore
+		Install-as-dotnet-tool.ps1 = Install-as-dotnet-tool.ps1
+		build.cmd = build.cmd
+		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "InitProject.Tests", "InitProject.Tests\InitProject.Tests.fsproj", "{088B36EF-4234-40DB-B604-E18001457ACD}"

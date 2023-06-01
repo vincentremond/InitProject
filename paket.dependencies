@@ -1,9 +1,17 @@
+source https://api.nuget.org/v3/index.json
+
+nuget coverlet.collector
+nuget Microsoft.NET.Test.Sdk
+nuget NUnit
+nuget NUnit.Analyzers
+nuget NUnit3TestAdapter
 group Console
 
 storage: none
 framework: auto-detect
 source https://api.nuget.org/v3/index.json
 
+nuget Fake.Core
 nuget Fake.Core.CommandLineParsing
 nuget Fake.Core.Target
 nuget Fake.Core.Trace

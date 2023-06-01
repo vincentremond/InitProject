@@ -36,14 +36,18 @@ module Guid =
 [<RequireQualifiedAccess>]
 module StringList =
     let appendAfter before after =
-        List.collect (function
+        List.collect (
+            function
             | Equals before -> [ before; after ]
-            | line -> [ line ])
+            | line -> [ line ]
+        )
 
     let insertManyBefore beforeWhat contents =
-        List.collect (function
+        List.collect (
+            function
             | Equals beforeWhat -> contents @ [ beforeWhat ]
-            | line -> [ line ])
+            | line -> [ line ]
+        )
 
 [<RequireQualifiedAccess>]
 module File =

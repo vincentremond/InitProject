@@ -1,4 +1,5 @@
 group Console
+FSharp.Core
 Fake.Core.CommandLineParsing
 Fake.Core.Trace
 Fake.Core.Target

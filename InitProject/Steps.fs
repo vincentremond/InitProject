@@ -25,6 +25,7 @@ module Steps =
         let bare = false
         let shared = false
         Repository.init initProjectContext.Solution.Folder bare shared
+        Branches.checkout initProjectContext.Solution.Folder true "main"
 
     let ``Add .gitignore`` (_: InitProjectContext) _ =
         DotNetCli.exec "new" [ "gitignore" ]
@@ -35,7 +36,8 @@ module Steps =
                 Trace.tracefn "Adding .idea/ to .gitignore"
                 lines |> StringList.appendAfter "# JetBrains Rider" ".idea/" |> Some
             else
-                None)
+                None
+        )
 
     let ``io: Create README.md`` (initProjectContext: InitProjectContext) _ =
         [ $"# {initProjectContext.Solution.Name}"; "" ]
@@ -60,46 +62,57 @@ module Steps =
         |> File.fixFile (fun lines ->
             let lines =
                 lines
-                |> List.map (function
+                |> List.map (
+                    function
                     | StartsWith "framework:" _ -> "framework: auto-detect"
-                    | line -> line)
+                    | line -> line
+                )
 
             let lines =
                 lines
-                @ [ ""
+                @ [
+                    ""
                     "group Tests"
                     ""
                     "storage: none"
                     "source https://api.nuget.org/v3/index.json"
-                    "" ]
+                    ""
+                ]
 
-            lines)
+            lines
+        )
 
 
     let ``Create main project`` (initProjectContext: InitProjectContext) _ =
-        DotNet.newFromTemplate "console" (fun o ->
-            { o with
-                Name = Some initProjectContext.MainProject.Name })
+        DotNet.newFromTemplate
+            "console"
+            (fun o -> {
+                o with
+                    Name = Some initProjectContext.MainProject.Name
+            })
 
         DotNetCli.exec "sln" [ "add"; initProjectContext.MainProject.File ]
 
         DotNetCli.exec "paket" [ "add"; "FSharp.Core"; "--project"; initProjectContext.MainProject.File ]
 
     let ``Create test project`` (initProjectContext: InitProjectContext) _ =
-        DotNet.newFromTemplate "nunit" (fun o ->
-            { o with
-                Name = Some initProjectContext.TestProject.Name })
+        DotNet.newFromTemplate
+            "nunit"
+            (fun o -> {
+                o with
+                    Name = Some initProjectContext.TestProject.Name
+            })
 
         DotNetCli.exec "sln" [ "add"; initProjectContext.TestProject.File ]
 
-        DotNetCli.exec
-            "paket"
-            [ "add"
-              "FSharp.Core"
-              "--project"
-              initProjectContext.TestProject.File
-              "--group"
-              "Tests" ]
+        DotNetCli.exec "paket" [
+            "add"
+            "FSharp.Core"
+            "--project"
+            initProjectContext.TestProject.File
+            "--group"
+            "Tests"
+        ]
 
         let xDoc = initProjectContext.TestProject.File |> XDocument.load
 
@@ -126,19 +139,31 @@ module Steps =
 
         nugetPackagesToAdd
         |> Seq.iter (fun package ->
-            DotNetCli.exec "paket" [ "add"; package; "--project"; initProjectContext.TestProject.File; "--group"; "Tests" ])
+            DotNetCli.exec "paket" [
+                "add"
+                package
+                "--project"
+                initProjectContext.TestProject.File
+                "--group"
+                "Tests"
+            ]
+        )
 
     let ``Add reference to main project on test project`` (initProjectContext: InitProjectContext) _ =
-        DotNetCli.exec "add" [ initProjectContext.TestProject.File; "reference"; initProjectContext.MainProject.File ]
+        DotNetCli.exec "add" [
+            initProjectContext.TestProject.File
+            "reference"
+            initProjectContext.MainProject.File
+        ]
 
-    let ``Add paket.references and enable FS0025 warning to projects`` (_: InitProjectContext) _ =
+    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects`` (_: InitProjectContext) _ =
         let fixFsProj (path: string) =
             let xDoc = path |> XDocument.Load
             let propertyGroup = xDoc.Root.Element("PropertyGroup")
-            
+
             // FS0025: Incomplete pattern matches on this expression
             propertyGroup.Add(XElement("WarningsAsErrors", "FS0025"))
-            
+
             // Disable AppendTargetFrameworkToOutputPath to allow simpler paths (for example for shortcuts)
             propertyGroup.Add(XElement("AppendTargetFrameworkToOutputPath", false))
 
@@ -152,10 +177,11 @@ module Steps =
         (!! "**/*.fsproj") |> Seq.iter fixFsProj
 
     let ``Create editorconfig file and apply config`` (initProjectContext: InitProjectContext) _ =
-        File.writeNew
-            (initProjectContext.Solution.Folder </> ".editorconfig")
-            [ "[*.{fs,fsx}]"
-              "fsharp_multiline_bracket_style = Stroustrup" ]
+        File.writeNew (initProjectContext.Solution.Folder </> ".editorconfig") [
+            "[*.{fs,fsx}]"
+            "fsharp_multiline_bracket_style = stroustrup"
+            "fsharp_multi_line_lambda_closing_newline = true"
+        ]
 
         DotNetCli.exec "fantomas" [ "." ]
 
@@ -167,17 +193,17 @@ module Steps =
 
         initProjectContext.Solution.File
         |> File.fixFile (
-            StringList.insertManyBefore
-                "Global"
-                [ $"Project(\"%s{folderProjectTypeGuid}\") = \".build\", \".build\", \"%s{projectUniqueGuid}\""
-                  "\tProjectSection(SolutionItems) = preProject"
-                  "\t\t.editorconfig = .editorconfig"
-                  "\t\t.gitignore = .gitignore"
-                  "\t\tpaket.dependencies = paket.dependencies"
-                  "\t\tpaket.lock = paket.lock"
-                  "\t\tREADME.md = README.md"
-                  "\tEndProjectSection"
-                  "EndProject" ]
+            StringList.insertManyBefore "Global" [
+                $"Project(\"%s{folderProjectTypeGuid}\") = \".build\", \".build\", \"%s{projectUniqueGuid}\""
+                "\tProjectSection(SolutionItems) = preProject"
+                "\t\t.editorconfig = .editorconfig"
+                "\t\t.gitignore = .gitignore"
+                "\t\tpaket.dependencies = paket.dependencies"
+                "\t\tpaket.lock = paket.lock"
+                "\t\tREADME.md = README.md"
+                "\tEndProjectSection"
+                "EndProject"
+            ]
         )
 
 

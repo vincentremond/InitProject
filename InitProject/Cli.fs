@@ -17,7 +17,7 @@ Usage:
     InitProject.exe --destination <destination>
 """
 
-    
+
     let parse args =
         let parsedArguments = args |> Seq.toArray |> Docopt(cli).Parse
 
