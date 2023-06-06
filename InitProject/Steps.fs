@@ -11,23 +11,23 @@ open Fake.IO.FileSystemOperators
 
 module Steps =
 
-    let ``dotnet: Update new template`` (_: InitProjectContext) _ = DotNetCli.exec "new" [ "update" ]
+    let ``dotnet: Update new template`` (_: InitProjectContext) = DotNetCli.exec "new" [ "update" ]
 
-    let ``io: Create target directory`` (initProjectContext: InitProjectContext) _ =
+    let ``io: Create target directory`` (initProjectContext: InitProjectContext) =
         Trace.tracefn $"Creating target directory {initProjectContext.Solution.Folder}"
         Directory.ensure initProjectContext.Solution.Folder
 
         Trace.tracefn $"Setting current directory to {initProjectContext.Solution.Folder}"
         Environment.CurrentDirectory <- initProjectContext.Solution.Folder
 
-    let ``git: Init repository`` (initProjectContext: InitProjectContext) _ =
+    let ``git: Init repository`` (initProjectContext: InitProjectContext) =
         Trace.tracefn $"Initializing git repository"
         let bare = false
         let shared = false
         Repository.init initProjectContext.Solution.Folder bare shared
         Branches.checkout initProjectContext.Solution.Folder true "main"
 
-    let ``Add .gitignore`` (_: InitProjectContext) _ =
+    let ``Add .gitignore`` (_: InitProjectContext) =
         DotNetCli.exec "new" [ "gitignore" ]
 
         ".gitignore"
@@ -39,23 +39,23 @@ module Steps =
                 None
         )
 
-    let ``io: Create README.md`` (initProjectContext: InitProjectContext) _ =
+    let ``io: Create README.md`` (initProjectContext: InitProjectContext) =
         [ $"# {initProjectContext.Solution.Name}"; "" ]
         |> File.writeNew (initProjectContext.Solution.Folder </> "README.md")
 
-    let ``Init dotnet tool-manifest`` (_: InitProjectContext) _ =
+    let ``Init dotnet tool-manifest`` (_: InitProjectContext) =
         DotNetCli.exec "new" [ "tool-manifest" ]
 
-    let ``Install dotnet tool paket`` (_: InitProjectContext) _ =
+    let ``Install dotnet tool paket`` (_: InitProjectContext) =
         DotNetCli.exec "tool" [ "install"; "paket" ]
 
-    let ``Install dotnet tool fantomas`` (_: InitProjectContext) _ =
+    let ``Install dotnet tool fantomas`` (_: InitProjectContext) =
         DotNetCli.exec "tool" [ "install"; "fantomas" ]
 
-    let ``Create sln`` (initProjectContext: InitProjectContext) _ =
+    let ``Create sln`` (initProjectContext: InitProjectContext) =
         DotNetCli.exec "new" [ "sln"; "--name"; initProjectContext.Solution.Name ]
 
-    let ``Init paket`` (_: InitProjectContext) _ =
+    let ``Init paket`` (_: InitProjectContext) =
         DotNetCli.exec "paket" [ "init" ]
 
         "paket.dependencies"
@@ -83,7 +83,7 @@ module Steps =
         )
 
 
-    let ``Create main project`` (initProjectContext: InitProjectContext) _ =
+    let ``Create main project`` (initProjectContext: InitProjectContext) =
         DotNet.newFromTemplate
             "console"
             (fun o -> {
@@ -95,7 +95,7 @@ module Steps =
 
         DotNetCli.exec "paket" [ "add"; "FSharp.Core"; "--project"; initProjectContext.MainProject.File ]
 
-    let ``Create test project`` (initProjectContext: InitProjectContext) _ =
+    let ``Create test project`` (initProjectContext: InitProjectContext) =
         DotNet.newFromTemplate
             "nunit"
             (fun o -> {
@@ -149,14 +149,14 @@ module Steps =
             ]
         )
 
-    let ``Add reference to main project on test project`` (initProjectContext: InitProjectContext) _ =
+    let ``Add reference to main project on test project`` (initProjectContext: InitProjectContext) =
         DotNetCli.exec "add" [
             initProjectContext.TestProject.File
             "reference"
             initProjectContext.MainProject.File
         ]
 
-    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects`` (_: InitProjectContext) _ =
+    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects`` (_: InitProjectContext) =
         let fixFsProj (path: string) =
             let xDoc = path |> XDocument.Load
             let propertyGroup = xDoc.Root.Element("PropertyGroup")
@@ -176,7 +176,7 @@ module Steps =
         // get all fsproj files
         (!! "**/*.fsproj") |> Seq.iter fixFsProj
 
-    let ``Create editorconfig file and apply config`` (initProjectContext: InitProjectContext) _ =
+    let ``Create editorconfig file and apply config`` (initProjectContext: InitProjectContext) =
         File.writeNew (initProjectContext.Solution.Folder </> ".editorconfig") [
             "[*.{fs,fsx}]"
             "fsharp_multiline_bracket_style = stroustrup"
@@ -185,7 +185,7 @@ module Steps =
 
         DotNetCli.exec "fantomas" [ "." ]
 
-    let ``Create .build folder to sln`` (initProjectContext: InitProjectContext) _ =
+    let ``Create .build folder to sln`` (initProjectContext: InitProjectContext) =
         let folderProjectTypeGuid =
             "2150E333-8FDC-42A3-9474-1A3956D46DE8" |> Guid |> Guid.toStringUC
 
@@ -207,7 +207,7 @@ module Steps =
         )
 
 
-    let ``Open rider`` (initProjectContext: InitProjectContext) _ =
+    let ``Open rider`` (initProjectContext: InitProjectContext) =
         let jetBrainsRiderPath =
             !! @"C:\Program Files (x86)\JetBrains\*\bin\rider64.exe" |> Seq.sort |> Seq.last
 

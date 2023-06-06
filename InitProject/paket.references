@@ -1,3 +1,4 @@
+FSharp.Quotations.Evaluator
 group Console
 FSharp.Core
 Fake.Core.CommandLineParsing

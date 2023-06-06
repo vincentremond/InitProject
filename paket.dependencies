@@ -1,6 +1,7 @@
 source https://api.nuget.org/v3/index.json
 
 nuget coverlet.collector
+nuget FSharp.Quotations.Evaluator
 nuget Microsoft.NET.Test.Sdk
 nuget NUnit
 nuget NUnit.Analyzers

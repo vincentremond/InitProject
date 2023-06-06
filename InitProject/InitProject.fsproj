@@ -15,7 +15,7 @@
     <Compile Include="InitProjectContext.fs" />
     <Compile Include="Tools.fs" />
     <Compile Include="Steps.fs" />
-    <Compile Include="Initializer.fs" />
+    <Compile Include="FakeOperators.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />

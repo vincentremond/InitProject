@@ -1,7 +1,0 @@
-Microsoft.NET.Test.Sdk
-NUnit
-NUnit3TestAdapter
-NUnit.Analyzers
-coverlet.collector
-group Console
-FSharp.Core
