@@ -4,7 +4,11 @@ open Steps
 open FakeOperators
 
 let args = System.Environment.GetCommandLineArgs().[1..]
-let ctx = args |> Cli.parse |> InitProjectContext.fromCliArguments
+
+let ctx =
+    args
+    |> Cli.parse
+    |> InitProjectContext.fromCliArguments
 
 []
 |> Context.FakeExecutionContext.Create false "InitProject.exe"

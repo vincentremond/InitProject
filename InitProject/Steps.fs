@@ -34,26 +34,45 @@ module Steps =
         |> File.tryFixFile (fun lines ->
             if not (lines |> Seq.contains ".idea/") then
                 Trace.tracefn "Adding .idea/ to .gitignore"
-                lines |> StringList.appendAfter "# JetBrains Rider" ".idea/" |> Some
+
+                lines
+                |> StringList.appendAfter "# JetBrains Rider" ".idea/"
+                |> Some
             else
                 None
         )
 
     let ``io: Create README.md`` (initProjectContext: InitProjectContext) =
-        [ $"# {initProjectContext.Solution.Name}"; "" ]
-        |> File.writeNew (initProjectContext.Solution.Folder </> "README.md")
+        [
+            $"# {initProjectContext.Solution.Name}"
+            ""
+        ]
+        |> File.writeNew (
+            initProjectContext.Solution.Folder
+            </> "README.md"
+        )
 
     let ``Init dotnet tool-manifest`` (_: InitProjectContext) =
         DotNetCli.exec "new" [ "tool-manifest" ]
 
     let ``Install dotnet tool paket`` (_: InitProjectContext) =
-        DotNetCli.exec "tool" [ "install"; "paket" ]
+        DotNetCli.exec "tool" [
+            "install"
+            "paket"
+        ]
 
     let ``Install dotnet tool fantomas`` (_: InitProjectContext) =
-        DotNetCli.exec "tool" [ "install"; "fantomas" ]
+        DotNetCli.exec "tool" [
+            "install"
+            "fantomas"
+        ]
 
     let ``Create sln`` (initProjectContext: InitProjectContext) =
-        DotNetCli.exec "new" [ "sln"; "--name"; initProjectContext.Solution.Name ]
+        DotNetCli.exec "new" [
+            "sln"
+            "--name"
+            initProjectContext.Solution.Name
+        ]
 
     let ``Init paket`` (_: InitProjectContext) =
         DotNetCli.exec "paket" [ "init" ]
@@ -82,28 +101,28 @@ module Steps =
             lines
         )
 
-
     let ``Create main project`` (initProjectContext: InitProjectContext) =
-        DotNet.newFromTemplate
-            "console"
-            (fun o -> {
-                o with
-                    Name = Some initProjectContext.MainProject.Name
-            })
+        DotNet.newFromTemplate "console" (fun o -> { o with Name = Some initProjectContext.MainProject.Name })
 
-        DotNetCli.exec "sln" [ "add"; initProjectContext.MainProject.File ]
+        DotNetCli.exec "sln" [
+            "add"
+            initProjectContext.MainProject.File
+        ]
 
-        DotNetCli.exec "paket" [ "add"; "FSharp.Core"; "--project"; initProjectContext.MainProject.File ]
+        DotNetCli.exec "paket" [
+            "add"
+            "FSharp.Core"
+            "--project"
+            initProjectContext.MainProject.File
+        ]
 
     let ``Create test project`` (initProjectContext: InitProjectContext) =
-        DotNet.newFromTemplate
-            "nunit"
-            (fun o -> {
-                o with
-                    Name = Some initProjectContext.TestProject.Name
-            })
+        DotNet.newFromTemplate "nunit" (fun o -> { o with Name = Some initProjectContext.TestProject.Name })
 
-        DotNetCli.exec "sln" [ "add"; initProjectContext.TestProject.File ]
+        DotNetCli.exec "sln" [
+            "add"
+            initProjectContext.TestProject.File
+        ]
 
         DotNetCli.exec "paket" [
             "add"
@@ -114,10 +133,15 @@ module Steps =
             "Tests"
         ]
 
-        let xDoc = initProjectContext.TestProject.File |> XDocument.load
+        let xDoc =
+            initProjectContext.TestProject.File
+            |> XDocument.load
 
         let nugetReferences =
-            xDoc.Root.Elements("ItemGroup").Elements("PackageReference") |> Seq.toArray
+            xDoc.Root
+                .Elements("ItemGroup")
+                .Elements("PackageReference")
+            |> Seq.toArray
 
         let nugetPackagesToAdd =
             nugetReferences.Attributes("Include")
@@ -126,14 +150,25 @@ module Steps =
 
         nugetReferences.Remove()
 
-        xDoc.Root.Element("PropertyGroup").Element("GenerateProgramFile").Value <- "true"
+        xDoc.Root
+            .Element("PropertyGroup")
+            .Element("GenerateProgramFile")
+            .Value <- "true"
 
-        xDoc.Root.Element("ItemGroup").Elements("Compile")
-        |> Seq.where (fun compile -> compile.Attribute("Include").Value = "Program.fs")
+        xDoc.Root
+            .Element("ItemGroup")
+            .Elements("Compile")
+        |> Seq.where (fun compile ->
+            compile
+                .Attribute("Include")
+                .Value = "Program.fs"
+        )
         |> Seq.iter (fun compile -> compile.Remove())
 
-        File.delete (initProjectContext.TestProject.Folder </> "Program.fs")
-
+        File.delete (
+            initProjectContext.TestProject.Folder
+            </> "Program.fs"
+        )
 
         xDoc.Save(initProjectContext.TestProject.File)
 
@@ -156,7 +191,9 @@ module Steps =
             initProjectContext.MainProject.File
         ]
 
-    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects`` (_: InitProjectContext) =
+    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects``
+        (_: InitProjectContext)
+        =
         let fixFsProj (path: string) =
             let xDoc = path |> XDocument.Load
             let propertyGroup = xDoc.Root.Element("PropertyGroup")
@@ -169,27 +206,51 @@ module Steps =
 
             xDoc.Root
                 .Element("ItemGroup")
-                .AddFirst(XElement("Content", [ XAttribute("Include", "paket.references") ]))
+                .AddFirst(XElement("None", [ XAttribute("Include", "paket.references") ]))
 
             xDoc.Save(path)
 
         // get all fsproj files
-        (!! "**/*.fsproj") |> Seq.iter fixFsProj
+        (!! "**/*.fsproj")
+        |> Seq.iter fixFsProj
 
     let ``Create editorconfig file and apply config`` (initProjectContext: InitProjectContext) =
-        File.writeNew (initProjectContext.Solution.Folder </> ".editorconfig") [
-            "[*.{fs,fsx}]"
-            "fsharp_multiline_bracket_style = stroustrup"
-            "fsharp_multi_line_lambda_closing_newline = true"
-        ]
+        File.writeNew
+            (initProjectContext.Solution.Folder
+             </> ".editorconfig")
+            [
+                "root = true"
+                ""
+                "[paket.*]"
+                "insert_final_newline = false"
+                ""
+                "[*.{fs,fsx}]"
+                "fsharp_multiline_bracket_style = stroustrup"
+                "fsharp_multi_line_lambda_closing_newline = true"
+                "fsharp_max_infix_operator_expression = 30"
+                "fsharp_max_dot_get_expression_width = 30"
+
+                "fsharp_bar_before_discriminated_union_declaration = true"
+                "fsharp_keep_max_number_of_blank_lines = 1"
+
+                "fsharp_record_multiline_formatter = number_of_items"
+                "fsharp_max_record_number_of_items = 1"
+
+                "fsharp_array_or_list_multiline_formatter = number_of_items"
+                "fsharp_max_array_or_list_number_of_items = 1"
+            ]
 
         DotNetCli.exec "fantomas" [ "." ]
 
     let ``Create .build folder to sln`` (initProjectContext: InitProjectContext) =
         let folderProjectTypeGuid =
-            "2150E333-8FDC-42A3-9474-1A3956D46DE8" |> Guid |> Guid.toStringUC
+            "2150E333-8FDC-42A3-9474-1A3956D46DE8"
+            |> Guid
+            |> Guid.toStringUC
 
-        let projectUniqueGuid = Guid.NewGuid() |> Guid.toStringUC
+        let projectUniqueGuid =
+            Guid.NewGuid()
+            |> Guid.toStringUC
 
         initProjectContext.Solution.File
         |> File.fixFile (
@@ -206,10 +267,11 @@ module Steps =
             ]
         )
 
-
     let ``Open rider`` (initProjectContext: InitProjectContext) =
         let jetBrainsRiderPath =
-            !! @"C:\Program Files (x86)\JetBrains\*\bin\rider64.exe" |> Seq.sort |> Seq.last
+            !! @"C:\Program Files (x86)\JetBrains\*\bin\rider64.exe"
+            |> Seq.sort
+            |> Seq.last
 
         (jetBrainsRiderPath, Arguments.ofList [ initProjectContext.Solution.File ])
         |> Command.RawCommand
