@@ -104,17 +104,12 @@ module Steps =
 
     let ``Create main project`` (ctx: InitProjectContext) =
 
-        let language =
-            match ctx.Language with
-            | CSharp -> DotNet.NewLanguage.CSharp
-            | FSharp -> DotNet.NewLanguage.FSharp
-
         DotNet.newFromTemplate
             "console"
             (fun o -> {
                 o with
                     Name = Some ctx.MainProject.Name
-                    Language = language
+                    Language = ctx.Language.toNewOption
             })
 
         DotNetCli.exec "sln" [
@@ -130,26 +125,32 @@ module Steps =
                 ctx.MainProject.File
             ]
 
-    let ``Create test project`` (initProjectContext: InitProjectContext) =
-        DotNet.newFromTemplate "nunit" (fun o -> { o with Name = Some initProjectContext.TestProject.Name })
+    let ``Create test project`` (ctx: InitProjectContext) =
+        DotNet.newFromTemplate
+            "nunit"
+            (fun o -> {
+                o with
+                    Name = Some ctx.TestProject.Name
+                    Language = ctx.Language.toNewOption
+            })
 
         DotNetCli.exec "sln" [
             "add"
-            initProjectContext.TestProject.File
+            ctx.TestProject.File
         ]
 
-        if initProjectContext.Language = FSharp then
+        if ctx.Language = FSharp then
             DotNetCli.exec "paket" [
                 "add"
                 "FSharp.Core"
                 "--project"
-                initProjectContext.TestProject.File
+                ctx.TestProject.File
                 "--group"
                 "Tests"
             ]
 
         let xDoc =
-            initProjectContext.TestProject.File
+            ctx.TestProject.File
             |> XDocument.load
 
         let nugetReferences =
@@ -180,9 +181,9 @@ module Steps =
         )
         |> Seq.iter (fun compile -> compile.Remove())
 
-        File.delete initProjectContext.TestProject.ProgramFile
+        File.delete ctx.TestProject.ProgramFile
 
-        xDoc.Save(initProjectContext.TestProject.File)
+        xDoc.Save(ctx.TestProject.File)
 
         nugetPackagesToAdd
         |> Seq.iter (fun package ->
@@ -190,7 +191,7 @@ module Steps =
                 "add"
                 package
                 "--project"
-                initProjectContext.TestProject.File
+                ctx.TestProject.File
                 "--group"
                 "Tests"
             ]
