@@ -61,11 +61,12 @@ module Steps =
             "paket"
         ]
 
-    let ``Install dotnet tool fantomas`` (_: InitProjectContext) =
-        DotNetCli.exec "tool" [
-            "install"
-            "fantomas"
-        ]
+    let ``Install dotnet tool fantomas`` (ctx: InitProjectContext) =
+        if ctx.Language = FSharp then
+            DotNetCli.exec "tool" [
+                "install"
+                "fantomas"
+            ]
 
     let ``Create sln`` (initProjectContext: InitProjectContext) =
         DotNetCli.exec "new" [
@@ -101,20 +102,33 @@ module Steps =
             lines
         )
 
-    let ``Create main project`` (initProjectContext: InitProjectContext) =
-        DotNet.newFromTemplate "console" (fun o -> { o with Name = Some initProjectContext.MainProject.Name })
+    let ``Create main project`` (ctx: InitProjectContext) =
+
+        let language =
+            match ctx.Language with
+            | CSharp -> DotNet.NewLanguage.CSharp
+            | FSharp -> DotNet.NewLanguage.FSharp
+
+        DotNet.newFromTemplate
+            "console"
+            (fun o -> {
+                o with
+                    Name = Some ctx.MainProject.Name
+                    Language = language
+            })
 
         DotNetCli.exec "sln" [
             "add"
-            initProjectContext.MainProject.File
+            ctx.MainProject.File
         ]
 
-        DotNetCli.exec "paket" [
-            "add"
-            "FSharp.Core"
-            "--project"
-            initProjectContext.MainProject.File
-        ]
+        if ctx.Language = FSharp then
+            DotNetCli.exec "paket" [
+                "add"
+                "FSharp.Core"
+                "--project"
+                ctx.MainProject.File
+            ]
 
     let ``Create test project`` (initProjectContext: InitProjectContext) =
         DotNet.newFromTemplate "nunit" (fun o -> { o with Name = Some initProjectContext.TestProject.Name })
@@ -124,14 +138,15 @@ module Steps =
             initProjectContext.TestProject.File
         ]
 
-        DotNetCli.exec "paket" [
-            "add"
-            "FSharp.Core"
-            "--project"
-            initProjectContext.TestProject.File
-            "--group"
-            "Tests"
-        ]
+        if initProjectContext.Language = FSharp then
+            DotNetCli.exec "paket" [
+                "add"
+                "FSharp.Core"
+                "--project"
+                initProjectContext.TestProject.File
+                "--group"
+                "Tests"
+            ]
 
         let xDoc =
             initProjectContext.TestProject.File
@@ -165,10 +180,7 @@ module Steps =
         )
         |> Seq.iter (fun compile -> compile.Remove())
 
-        File.delete (
-            initProjectContext.TestProject.Folder
-            </> "Program.fs"
-        )
+        File.delete initProjectContext.TestProject.ProgramFile
 
         xDoc.Save(initProjectContext.TestProject.File)
 
@@ -192,27 +204,29 @@ module Steps =
         ]
 
     let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects``
-        (_: InitProjectContext)
+        (ctx: InitProjectContext)
         =
-        let fixFsProj (path: string) =
+        let fixProjectFile (path: string) =
             let xDoc = path |> XDocument.Load
             let propertyGroup = xDoc.Root.Element("PropertyGroup")
 
-            // FS0025: Incomplete pattern matches on this expression
-            propertyGroup.Add(XElement("WarningsAsErrors", "FS0025"))
+            if ctx.Language = FSharp then
+                // FS0025: Incomplete pattern matches on this expression
+                propertyGroup.Add(XElement("WarningsAsErrors", "FS0025"))
 
             // Disable AppendTargetFrameworkToOutputPath to allow simpler paths (for example for shortcuts)
             propertyGroup.Add(XElement("AppendTargetFrameworkToOutputPath", false))
 
-            xDoc.Root
-                .Element("ItemGroup")
-                .AddFirst(XElement("None", [ XAttribute("Include", "paket.references") ]))
+            if ctx.Language = FSharp then
+                xDoc.Root
+                    .Element("ItemGroup")
+                    .AddFirst(XElement("None", [ XAttribute("Include", "paket.references") ]))
 
             xDoc.Save(path)
 
         // get all fsproj files
-        (!! "**/*.fsproj")
-        |> Seq.iter fixFsProj
+        (!! @"**/*.?sproj")
+        |> Seq.iter fixProjectFile
 
     let ``Create editorconfig file and apply config`` (initProjectContext: InitProjectContext) =
         File.writeNew

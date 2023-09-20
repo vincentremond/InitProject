@@ -1,4 +1,5 @@
 FSharp.Quotations.Evaluator
+Fargo.CmdLine
 group Console
 FSharp.Core
 Fake.Core.CommandLineParsing
