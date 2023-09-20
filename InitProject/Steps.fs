@@ -153,26 +153,33 @@ module Steps =
             ctx.TestProject.File
             |> XDocument.load
 
+        printfn $"Test project loaded {ctx.TestProject.File}"
+
         let nugetReferences =
             xDoc.Root
                 .Elements("ItemGroup")
                 .Elements("PackageReference")
             |> Seq.toArray
 
+        printfn $"Found %d{nugetReferences.Length} nuget references"
+
         let nugetPackagesToAdd =
             nugetReferences.Attributes("Include")
             |> Seq.map (fun x -> x.Value)
             |> Seq.toArray
 
+        printfn $"Found %d{nugetPackagesToAdd.Length} nuget packages to add"
+
         nugetReferences.Remove()
+        printfn "Removed old nuget references"
 
         xDoc.Root
-            .Element("PropertyGroup")
-            .Element("GenerateProgramFile")
+            .Elementtt("PropertyGroup")
+            .Elementtt("GenerateProgramFile")
             .Value <- "true"
 
         xDoc.Root
-            .Element("ItemGroup")
+            .Elementtt("ItemGroup")
             .Elements("Compile")
         |> Seq.where (fun compile ->
             compile

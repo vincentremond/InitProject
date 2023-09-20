@@ -1,10 +1,12 @@
 ﻿namespace InitProject
 
 open System
+open System.Runtime.CompilerServices
 open System.Xml.Linq
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
+open NuGet.Packaging.Signing
 
 [<AutoOpen>]
 module String =
@@ -110,3 +112,18 @@ module XElement =
 [<RequireQualifiedAccess>]
 module XAttribute =
     let value (x: XAttribute) = x.Value
+
+[<Extension>]
+type XmlExtensions() =
+    [<Extension>]
+    static member Elementtt(x: XContainer, name) =
+        let elm =
+            x.Element(XName.Get(name))
+            |> Option.ofObj
+
+        match elm with
+        | Some e -> e
+        | None ->
+            let e = XElement(XName.Get(name))
+            x.Add(e)
+            e
