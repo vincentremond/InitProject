@@ -177,6 +177,7 @@ module Steps =
             .Elementtt("PropertyGroup")
             .Elementtt("GenerateProgramFile")
             .Value <- "true"
+        printfn "Set GenerateProgramFile to true"
 
         xDoc.Root
             .Elementtt("ItemGroup")
@@ -187,10 +188,13 @@ module Steps =
                 .Value = "Program.fs"
         )
         |> Seq.iter (fun compile -> compile.Remove())
+        printfn "Removed Program.fs from Compile"
 
         File.delete ctx.TestProject.ProgramFile
+        printfn "Deleted main program file"
 
         xDoc.Save(ctx.TestProject.File)
+        printfn "Saved test project"
 
         nugetPackagesToAdd
         |> Seq.iter (fun package ->
@@ -236,33 +240,34 @@ module Steps =
         (!! @"**/*.?sproj")
         |> Seq.iter fixProjectFile
 
-    let ``Create editorconfig file and apply config`` (initProjectContext: InitProjectContext) =
-        File.writeNew
-            (initProjectContext.Solution.Folder
-             </> ".editorconfig")
-            [
-                "root = true"
-                ""
-                "[paket.*]"
-                "insert_final_newline = false"
-                ""
-                "[*.{fs,fsx}]"
-                "fsharp_multiline_bracket_style = stroustrup"
-                "fsharp_multi_line_lambda_closing_newline = true"
-                "fsharp_max_infix_operator_expression = 30"
-                "fsharp_max_dot_get_expression_width = 30"
+    let ``Create editorconfig file and apply config`` (ctx: InitProjectContext) =
+        if ctx.Language = FSharp then
+            File.writeNew
+                (ctx.Solution.Folder
+                 </> ".editorconfig")
+                [
+                    "root = true"
+                    ""
+                    "[paket.*]"
+                    "insert_final_newline = false"
+                    ""
+                    "[*.{fs,fsx}]"
+                    "fsharp_multiline_bracket_style = stroustrup"
+                    "fsharp_multi_line_lambda_closing_newline = true"
+                    "fsharp_max_infix_operator_expression = 30"
+                    "fsharp_max_dot_get_expression_width = 30"
 
-                "fsharp_bar_before_discriminated_union_declaration = true"
-                "fsharp_keep_max_number_of_blank_lines = 1"
+                    "fsharp_bar_before_discriminated_union_declaration = true"
+                    "fsharp_keep_max_number_of_blank_lines = 1"
 
-                "fsharp_record_multiline_formatter = number_of_items"
-                "fsharp_max_record_number_of_items = 1"
+                    "fsharp_record_multiline_formatter = number_of_items"
+                    "fsharp_max_record_number_of_items = 1"
 
-                "fsharp_array_or_list_multiline_formatter = number_of_items"
-                "fsharp_max_array_or_list_number_of_items = 1"
-            ]
+                    "fsharp_array_or_list_multiline_formatter = number_of_items"
+                    "fsharp_max_array_or_list_number_of_items = 1"
+                ]
 
-        DotNetCli.exec "fantomas" [ "." ]
+            DotNetCli.exec "fantomas" [ "." ]
 
     let ``Create .build folder to sln`` (initProjectContext: InitProjectContext) =
         let folderProjectTypeGuid =
