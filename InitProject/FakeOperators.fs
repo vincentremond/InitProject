@@ -19,8 +19,6 @@ let private createTarget (expr: UnitExpr) =
     Target.create targetName (invokeExpression expr)
     targetName
 
-let (==!>) (f1: UnitExpr) (f2: UnitExpr) =
-    (createTarget f1)
-    ==> (createTarget f2)
+let (==!>) (f1: UnitExpr) (f2: UnitExpr) = (createTarget f1) ==> (createTarget f2)
 
 let (===>) name1 (f2: UnitExpr) = name1 ==> (createTarget f2)

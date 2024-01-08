@@ -35,9 +35,7 @@ module Steps =
             if not (lines |> Seq.contains ".idea/") then
                 Trace.tracefn "Adding .idea/ to .gitignore"
 
-                lines
-                |> StringList.appendAfter "# JetBrains Rider" ".idea/"
-                |> Some
+                lines |> StringList.appendAfter "# JetBrains Rider" ".idea/" |> Some
             else
                 None
         )
@@ -47,10 +45,7 @@ module Steps =
             $"# {initProjectContext.Solution.Name}"
             ""
         ]
-        |> File.writeNew (
-            initProjectContext.Solution.Folder
-            </> "README.md"
-        )
+        |> File.writeNew (initProjectContext.Solution.Folder </> "README.md")
 
     let ``Init dotnet tool-manifest`` (_: InitProjectContext) =
         DotNetCli.exec "new" [ "tool-manifest" ]
@@ -149,17 +144,12 @@ module Steps =
                 "Tests"
             ]
 
-        let xDoc =
-            ctx.TestProject.File
-            |> XDocument.load
+        let xDoc = ctx.TestProject.File |> XDocument.load
 
         printfn $"Test project loaded {ctx.TestProject.File}"
 
         let nugetReferences =
-            xDoc.Root
-                .Elements("ItemGroup")
-                .Elements("PackageReference")
-            |> Seq.toArray
+            xDoc.Root.Elements("ItemGroup").Elements("PackageReference") |> Seq.toArray
 
         printfn $"Found %d{nugetReferences.Length} nuget references"
 
@@ -173,21 +163,13 @@ module Steps =
         nugetReferences.Remove()
         printfn "Removed old nuget references"
 
-        xDoc.Root
-            .Elementtt("PropertyGroup")
-            .Elementtt("GenerateProgramFile")
-            .Value <- "true"
+        xDoc.Root.Elementtt("PropertyGroup").Elementtt("GenerateProgramFile").Value <- "true"
         printfn "Set GenerateProgramFile to true"
 
-        xDoc.Root
-            .Elementtt("ItemGroup")
-            .Elements("Compile")
-        |> Seq.where (fun compile ->
-            compile
-                .Attribute("Include")
-                .Value = "Program.fs"
-        )
+        xDoc.Root.Elementtt("ItemGroup").Elements("Compile")
+        |> Seq.where (fun compile -> compile.Attribute("Include").Value = "Program.fs")
         |> Seq.iter (fun compile -> compile.Remove())
+
         printfn "Removed Program.fs from Compile"
 
         File.delete ctx.TestProject.ProgramFile
@@ -237,47 +219,37 @@ module Steps =
             xDoc.Save(path)
 
         // get all fsproj files
-        (!! @"**/*.?sproj")
-        |> Seq.iter fixProjectFile
+        (!! @"**/*.?sproj") |> Seq.iter fixProjectFile
 
     let ``Create editorconfig file and apply config`` (ctx: InitProjectContext) =
         if ctx.Language = FSharp then
-            File.writeNew
-                (ctx.Solution.Folder
-                 </> ".editorconfig")
-                [
-                    "root = true"
-                    ""
-                    "[paket.*]"
-                    "insert_final_newline = false"
-                    ""
-                    "[*.{fs,fsx}]"
-                    "fsharp_multiline_bracket_style = stroustrup"
-                    "fsharp_multi_line_lambda_closing_newline = true"
-                    "fsharp_max_infix_operator_expression = 30"
-                    "fsharp_max_dot_get_expression_width = 30"
+            File.writeNew (ctx.Solution.Folder </> ".editorconfig") [
+                "root = true"
+                ""
+                "[paket.*]"
+                "insert_final_newline = false"
+                ""
+                "[*.{fs,fsx}]"
+                "fsharp_multiline_bracket_style = stroustrup"
+                "fsharp_multi_line_lambda_closing_newline = true"
 
-                    "fsharp_bar_before_discriminated_union_declaration = true"
-                    "fsharp_keep_max_number_of_blank_lines = 1"
+                "fsharp_bar_before_discriminated_union_declaration = true"
+                "fsharp_keep_max_number_of_blank_lines = 1"
 
-                    "fsharp_record_multiline_formatter = number_of_items"
-                    "fsharp_max_record_number_of_items = 1"
+                "fsharp_record_multiline_formatter = number_of_items"
+                "fsharp_max_record_number_of_items = 1"
 
-                    "fsharp_array_or_list_multiline_formatter = number_of_items"
-                    "fsharp_max_array_or_list_number_of_items = 1"
-                ]
+                "fsharp_array_or_list_multiline_formatter = number_of_items"
+                "fsharp_max_array_or_list_number_of_items = 1"
+            ]
 
             DotNetCli.exec "fantomas" [ "." ]
 
     let ``Create .build folder to sln`` (initProjectContext: InitProjectContext) =
         let folderProjectTypeGuid =
-            "2150E333-8FDC-42A3-9474-1A3956D46DE8"
-            |> Guid
-            |> Guid.toStringUC
+            "2150E333-8FDC-42A3-9474-1A3956D46DE8" |> Guid |> Guid.toStringUC
 
-        let projectUniqueGuid =
-            Guid.NewGuid()
-            |> Guid.toStringUC
+        let projectUniqueGuid = Guid.NewGuid() |> Guid.toStringUC
 
         initProjectContext.Solution.File
         |> File.fixFile (
@@ -294,11 +266,59 @@ module Steps =
             ]
         )
 
+    let ``Add license file`` (initProjectContext: InitProjectContext) =
+        let licenseFile = initProjectContext.Solution.Folder </> "LICENSE"
+
+        if (licenseFile |> File.exists) then
+            printfn $"License file already exists {licenseFile}"
+        else
+            let tryGit command =
+                match CommandHelper.runGitCommand "." command with
+                | false, _, error when (not (String.isNullOrEmpty (error))) -> Error error
+                | true, output, _ -> Ok output
+                | r -> failwith $"Unexpected result from git command %A{r}"
+
+            let simpleGitCommand command =
+                match tryGit command with
+                | Ok [ output ] -> output
+                | Ok output -> failwith $"Unexpected output from git command %A{output}"
+                | Error error -> failwith $"Unexpected error from git command %A{error}"
+
+            let year = DateTime.Now.Year.ToString()
+
+            let currentGitUser = {|
+                Name = simpleGitCommand "config user.name"
+                Email = simpleGitCommand "config user.email"
+            |}
+
+            let licenseText =
+                $"""
+Copyright (c) {year} {currentGitUser.Name} <{currentGitUser.Email}>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
+            File.writeString false licenseFile licenseText
+
     let ``Open rider`` (initProjectContext: InitProjectContext) =
         let jetBrainsRiderPath =
-            !! @"C:\Program Files (x86)\JetBrains\*\bin\rider64.exe"
-            |> Seq.sort
-            |> Seq.last
+            !! @"C:\Program Files (x86)\JetBrains\*\bin\rider64.exe" |> Seq.sort |> Seq.last
 
         (jetBrainsRiderPath, Arguments.ofList [ initProjectContext.Solution.File ])
         |> Command.RawCommand

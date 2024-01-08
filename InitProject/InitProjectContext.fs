@@ -29,31 +29,22 @@ type InitProjectContext = {
     member this.Solution = {|
         Name = this.ProjectName
         Folder = this.TargetFolder
-        File =
-            this.TargetFolder
-            </> $"{this.ProjectName}.sln"
+        File = this.TargetFolder </> $"{this.ProjectName}.sln"
     |}
 
     member this.MainProject = {
         Name = this.ProjectName
-        Folder =
-            this.TargetFolder
-            </> this.ProjectName
+        Folder = this.TargetFolder </> this.ProjectName
         File =
             this.TargetFolder
             </> this.ProjectName
             </> $"{this.ProjectName}{this.ProjectExtension}"
-        ProgramFile =
-            this.TargetFolder
-            </> this.ProjectName
-            </> $"Program{this.SourceFileExtension}"
+        ProgramFile = this.TargetFolder </> this.ProjectName </> $"Program{this.SourceFileExtension}"
     }
 
     member this.TestProject = {
         Name = $"{this.ProjectName}.Tests"
-        Folder =
-            this.TargetFolder
-            </> $"{this.ProjectName}.Tests"
+        Folder = this.TargetFolder </> $"{this.ProjectName}.Tests"
         File =
             this.TargetFolder
             </> $"{this.ProjectName}.Tests"

@@ -20,30 +20,21 @@ module String =
 [<RequireQualifiedAccess>]
 module DotNetCli =
     let exec command ars =
-        let args =
-            ars
-            |> Seq.map (sprintf "%s")
-            |> String.concat " "
+        let args = ars |> Seq.map (sprintf "%s") |> String.concat " "
 
         let result = DotNet.exec (fun options -> options) command args
 
         match result with
-        | { ExitCode = 0 } ->
-            result.Results
-            |> Seq.iter (string >> (Trace.tracefn "%s"))
+        | { ExitCode = 0 } -> result.Results |> Seq.iter (string >> (Trace.tracefn "%s"))
         | _ ->
-            result.Errors
-            |> Seq.iter (Trace.traceErrorfn "%s")
+            result.Errors |> Seq.iter (Trace.traceErrorfn "%s")
 
             failwithf $"DotNetCLI.exec failed with exit code %d{result.ExitCode}"
 
 [<RequireQualifiedAccess>]
 module Guid =
 
-    let toStringUC (guid: Guid) =
-        guid
-            .ToString("B")
-            .ToUpperInvariant()
+    let toStringUC (guid: Guid) = guid.ToString("B").ToUpperInvariant()
 
 [<RequireQualifiedAccess>]
 module StringList =
@@ -67,19 +58,13 @@ module StringList =
 [<RequireQualifiedAccess>]
 module File =
     let fixFile (fix: string list -> string list) path =
-        let lines =
-            path
-            |> File.read
-            |> Seq.toList
+        let lines = path |> File.read |> Seq.toList
 
         let lines = fix lines
         File.writeNew path lines
 
     let tryFixFile (f: string list -> string list option) path =
-        let lines =
-            path
-            |> File.read
-            |> Seq.toList
+        let lines = path |> File.read |> Seq.toList
 
         let lines = f lines
 
@@ -117,9 +102,7 @@ module XAttribute =
 type XmlExtensions() =
     [<Extension>]
     static member Elementtt(x: XContainer, name) =
-        let elm =
-            x.Element(XName.Get(name))
-            |> Option.ofObj
+        let elm = x.Element(XName.Get(name)) |> Option.ofObj
 
         match elm with
         | Some e -> e

@@ -55,6 +55,7 @@ let main args =
                     @>
                     ===> <@ ``Create editorconfig file and apply config`` ctx @>
                     ===> <@ ``Create .build folder to sln`` ctx @>
+                    ===> <@ ``Add license file`` ctx @>
                     ===> <@ ``Open rider`` ctx @>
                 )
 
