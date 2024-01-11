@@ -17,12 +17,22 @@ module String =
     // equals active pattern
     let (|Equals|_|) (str1: string) (str2: string) = if str1 = str2 then Some() else None
 
+    let (|Contains|_|) (str1: string) (str2: string) =
+        if str1.Contains(str2) then Some(str1) else None
+
 [<RequireQualifiedAccess>]
 module DotNetCli =
     let exec command ars =
-        let args = ars |> Seq.map (sprintf "%s") |> String.concat " "
+        let args =
+            ars
+            |> Seq.map (
+                function
+                | Contains " " c -> $"\"%s{c}\""
+                | arg -> arg
+            )
+            |> String.concat " "
 
-        let result = DotNet.exec (fun options -> options) command args
+        let result = DotNet.exec id command args
 
         match result with
         | { ExitCode = 0 } -> result.Results |> Seq.iter (string >> (Trace.tracefn "%s"))
