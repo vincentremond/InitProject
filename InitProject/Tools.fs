@@ -23,15 +23,7 @@ module String =
 [<RequireQualifiedAccess>]
 module DotNetCli =
     let exec command ars =
-        let args =
-            ars
-            |> Seq.map (
-                function
-                | Contains " " c -> $"\"%s{c}\""
-                | arg -> arg
-            )
-            |> String.concat " "
-
+        let args = Args.toWindowsCommandLine ars
         let result = DotNet.exec id command args
 
         match result with
