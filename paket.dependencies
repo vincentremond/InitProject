@@ -1,21 +1,16 @@
 source https://api.nuget.org/v3/index.json
 
+storage: none
+framework: auto-detect
+
 nuget coverlet.collector
+nuget Fake.Core
+nuget Fake.Core.Target
+nuget Fake.DotNet.Cli
+nuget Fake.Tools.Git
 nuget Fargo.CmdLine
 nuget FSharp.Quotations.Evaluator
 nuget Microsoft.NET.Test.Sdk
 nuget NUnit
 nuget NUnit.Analyzers
 nuget NUnit3TestAdapter
-group Console
-
-storage: none
-framework: auto-detect
-source https://api.nuget.org/v3/index.json
-
-nuget Fake.Core
-nuget Fake.Core.CommandLineParsing
-nuget Fake.Core.Target
-nuget Fake.Core.Trace
-nuget Fake.DotNet.Cli
-nuget Fake.Tools.Git
