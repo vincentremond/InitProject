@@ -43,18 +43,22 @@ type InitProjectContext = {
         ProgramFile = this.TargetFolder </> this.ProjectName </> $"Program{this.SourceFileExtension}"
     }
 
-    member this.TestProject = {
-        Name = $"{this.ProjectName}.Tests"
-        Folder = this.TargetFolder </> $"{this.ProjectName}.Tests"
-        File =
-            this.TargetFolder
-            </> $"{this.ProjectName}.Tests"
-            </> $"{this.ProjectName}.Tests{this.ProjectExtension}"
-        ProgramFile =
-            this.TargetFolder
-            </> $"{this.ProjectName}.Tests"
-            </> $"Program{this.SourceFileExtension}"
-    }
+    member this.TestProject =
+        if this.NoTestProject then
+            None
+        else
+            Some {
+                Name = $"{this.ProjectName}.Tests"
+                Folder = this.TargetFolder </> $"{this.ProjectName}.Tests"
+                File =
+                    this.TargetFolder
+                    </> $"{this.ProjectName}.Tests"
+                    </> $"{this.ProjectName}.Tests{this.ProjectExtension}"
+                ProgramFile =
+                    this.TargetFolder
+                    </> $"{this.ProjectName}.Tests"
+                    </> $"Program{this.SourceFileExtension}"
+            }
 
     static member fromCliArguments(args: CliArguments) =
         let target =

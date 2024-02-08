@@ -121,20 +121,20 @@ module Steps =
             ]
 
     let ``Create test project`` (ctx: InitProjectContext) =
-        if ctx.NoTestProject then
-            printfn "Skipping test project creation"
-        else
+        match ctx.TestProject with
+        | None -> printfn "Skipping test project creation"
+        | Some testProject ->
             DotNet.newFromTemplate
                 "nunit"
                 (fun o -> {
                     o with
-                        Name = Some ctx.TestProject.Name
+                        Name = Some testProject.Name
                         Language = ctx.Language.toNewOption
                 })
 
             DotNetCli.exec "sln" [
                 "add"
-                ctx.TestProject.File
+                testProject.File
             ]
 
             if ctx.Language = FSharp then
@@ -142,14 +142,14 @@ module Steps =
                     "add"
                     "FSharp.Core"
                     "--project"
-                    ctx.TestProject.File
+                    testProject.File
                     "--group"
                     "Tests"
                 ]
 
-            let xDoc = ctx.TestProject.File |> XDocument.load
+            let xDoc = testProject.File |> XDocument.load
 
-            printfn $"Test project loaded {ctx.TestProject.File}"
+            printfn $"Test project loaded {testProject.File}"
 
             let nugetReferences =
                 xDoc.Root.Elements("ItemGroup").Elements("PackageReference") |> Seq.toArray
@@ -175,10 +175,10 @@ module Steps =
 
             printfn "Removed Program.fs from Compile"
 
-            File.delete ctx.TestProject.ProgramFile
+            File.delete testProject.ProgramFile
             printfn "Deleted main program file"
 
-            xDoc.Save(ctx.TestProject.File)
+            xDoc.Save(testProject.File)
             printfn "Saved test project"
 
             nugetPackagesToAdd
@@ -187,25 +187,23 @@ module Steps =
                     "add"
                     package
                     "--project"
-                    ctx.TestProject.File
+                    testProject.File
                     "--group"
                     "Tests"
                 ]
             )
 
     let ``Add reference to main project on test project`` (ctx: InitProjectContext) =
-        if ctx.NoTestProject then
-            printfn "Skipping test project reference"
-        else
+        match ctx.TestProject with
+        | None -> printfn "Skipping test project reference"
+        | Some testProject ->
             DotNetCli.exec "add" [
-                ctx.TestProject.File
+                testProject.File
                 "reference"
                 ctx.MainProject.File
             ]
 
-    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects``
-        (ctx: InitProjectContext)
-        =
+    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects`` (ctx: InitProjectContext) =
         let fixProjectFile (path: string) =
             let xDoc = path |> XDocument.Load
             let propertyGroup = xDoc.Root.Element("PropertyGroup")
