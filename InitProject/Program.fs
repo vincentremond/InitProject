@@ -7,6 +7,7 @@ open Fargo
 let cliParser =
     fargo {
         let! destination = opt "name" null "name" "Project name"
+        let! noTestProject = flag "no-test-project" null "Don't create test project"
 
         and! language =
             opt "lang" null "lang" "Language (csharp or fsharp)"
@@ -16,6 +17,7 @@ let cliParser =
         return {
             ProjectName = destination
             Language = language
+            NoTestProject = noTestProject
         }
     }
 

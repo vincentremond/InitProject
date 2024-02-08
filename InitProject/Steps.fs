@@ -121,81 +121,87 @@ module Steps =
             ]
 
     let ``Create test project`` (ctx: InitProjectContext) =
-        DotNet.newFromTemplate
-            "nunit"
-            (fun o -> {
-                o with
-                    Name = Some ctx.TestProject.Name
-                    Language = ctx.Language.toNewOption
-            })
+        if ctx.NoTestProject then
+            printfn "Skipping test project creation"
+        else
+            DotNet.newFromTemplate
+                "nunit"
+                (fun o -> {
+                    o with
+                        Name = Some ctx.TestProject.Name
+                        Language = ctx.Language.toNewOption
+                })
 
-        DotNetCli.exec "sln" [
-            "add"
-            ctx.TestProject.File
-        ]
-
-        if ctx.Language = FSharp then
-            DotNetCli.exec "paket" [
+            DotNetCli.exec "sln" [
                 "add"
-                "FSharp.Core"
-                "--project"
                 ctx.TestProject.File
-                "--group"
-                "Tests"
             ]
 
-        let xDoc = ctx.TestProject.File |> XDocument.load
+            if ctx.Language = FSharp then
+                DotNetCli.exec "paket" [
+                    "add"
+                    "FSharp.Core"
+                    "--project"
+                    ctx.TestProject.File
+                    "--group"
+                    "Tests"
+                ]
 
-        printfn $"Test project loaded {ctx.TestProject.File}"
+            let xDoc = ctx.TestProject.File |> XDocument.load
 
-        let nugetReferences =
-            xDoc.Root.Elements("ItemGroup").Elements("PackageReference") |> Seq.toArray
+            printfn $"Test project loaded {ctx.TestProject.File}"
 
-        printfn $"Found %d{nugetReferences.Length} nuget references"
+            let nugetReferences =
+                xDoc.Root.Elements("ItemGroup").Elements("PackageReference") |> Seq.toArray
 
-        let nugetPackagesToAdd =
-            nugetReferences.Attributes("Include")
-            |> Seq.map (fun x -> x.Value)
-            |> Seq.toArray
+            printfn $"Found %d{nugetReferences.Length} nuget references"
 
-        printfn $"Found %d{nugetPackagesToAdd.Length} nuget packages to add"
+            let nugetPackagesToAdd =
+                nugetReferences.Attributes("Include")
+                |> Seq.map (fun x -> x.Value)
+                |> Seq.toArray
 
-        nugetReferences.Remove()
-        printfn "Removed old nuget references"
+            printfn $"Found %d{nugetPackagesToAdd.Length} nuget packages to add"
 
-        xDoc.Root.Elementtt("PropertyGroup").Elementtt("GenerateProgramFile").Value <- "true"
-        printfn "Set GenerateProgramFile to true"
+            nugetReferences.Remove()
+            printfn "Removed old nuget references"
 
-        xDoc.Root.Elementtt("ItemGroup").Elements("Compile")
-        |> Seq.where (fun compile -> compile.Attribute("Include").Value = "Program.fs")
-        |> Seq.iter (fun compile -> compile.Remove())
+            xDoc.Root.Elementtt("PropertyGroup").Elementtt("GenerateProgramFile").Value <- "true"
+            printfn "Set GenerateProgramFile to true"
 
-        printfn "Removed Program.fs from Compile"
+            xDoc.Root.Elementtt("ItemGroup").Elements("Compile")
+            |> Seq.where (fun compile -> compile.Attribute("Include").Value = "Program.fs")
+            |> Seq.iter (fun compile -> compile.Remove())
 
-        File.delete ctx.TestProject.ProgramFile
-        printfn "Deleted main program file"
+            printfn "Removed Program.fs from Compile"
 
-        xDoc.Save(ctx.TestProject.File)
-        printfn "Saved test project"
+            File.delete ctx.TestProject.ProgramFile
+            printfn "Deleted main program file"
 
-        nugetPackagesToAdd
-        |> Seq.iter (fun package ->
-            DotNetCli.exec "paket" [
-                "add"
-                package
-                "--project"
+            xDoc.Save(ctx.TestProject.File)
+            printfn "Saved test project"
+
+            nugetPackagesToAdd
+            |> Seq.iter (fun package ->
+                DotNetCli.exec "paket" [
+                    "add"
+                    package
+                    "--project"
+                    ctx.TestProject.File
+                    "--group"
+                    "Tests"
+                ]
+            )
+
+    let ``Add reference to main project on test project`` (ctx: InitProjectContext) =
+        if ctx.NoTestProject then
+            printfn "Skipping test project reference"
+        else
+            DotNetCli.exec "add" [
                 ctx.TestProject.File
-                "--group"
-                "Tests"
+                "reference"
+                ctx.MainProject.File
             ]
-        )
-
-    let ``Add reference to main project on test project`` (initProjectContext: InitProjectContext) =
-        DotNetCli.exec "add" [
-            initProjectContext.TestProject.File
-            "reference"
-            initProjectContext.MainProject.File
-        ]
 
     let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects``
         (ctx: InitProjectContext)

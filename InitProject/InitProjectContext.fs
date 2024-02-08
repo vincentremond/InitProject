@@ -13,6 +13,7 @@ type InitProjectContext = {
     Language: Language
     TargetFolder: string
     ProjectName: string
+    NoTestProject: bool
 } with
 
     member this.ProjectExtension =
@@ -65,6 +66,7 @@ type InitProjectContext = {
 
         {
             Language = args.Language
+            NoTestProject = args.NoTestProject
             TargetFolder = info.FullName
             ProjectName = info.Name
         }

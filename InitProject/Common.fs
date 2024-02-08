@@ -20,4 +20,5 @@ type Language =
 type CliArguments = {
     ProjectName: string option
     Language: Language
+    NoTestProject: bool
 }
