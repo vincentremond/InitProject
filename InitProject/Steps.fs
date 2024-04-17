@@ -70,7 +70,7 @@ module Steps =
             initProjectContext.Solution.Name
         ]
 
-    let ``Init paket`` (_: InitProjectContext) =
+    let ``Init paket`` (ctx: InitProjectContext) =
         DotNetCli.exec "paket" [ "init" ]
 
         "paket.dependencies"
@@ -84,15 +84,19 @@ module Steps =
                 )
 
             let lines =
-                lines
-                @ [
-                    ""
-                    "group Tests"
-                    ""
-                    "storage: none"
-                    "source https://api.nuget.org/v3/index.json"
-                    ""
-                ]
+                match ctx.NoTestProject with
+                | true -> lines
+                | false ->
+
+                    lines
+                    @ [
+                        ""
+                        "group Tests"
+                        ""
+                        "storage: none"
+                        "source https://api.nuget.org/v3/index.json"
+                        ""
+                    ]
 
             lines
         )
