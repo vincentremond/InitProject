@@ -327,10 +327,7 @@ SOFTWARE.
             File.writeString false licenseFile licenseText
 
     let ``Open rider`` (initProjectContext: InitProjectContext) =
-        let jetBrainsRiderPath =
-            !! @"C:\Program Files (x86)\JetBrains\*\bin\rider64.exe" |> Seq.sort |> Seq.last
-
-        (jetBrainsRiderPath, Arguments.ofList [ initProjectContext.Solution.File ])
+        ("rider.exe", Arguments.ofList [])
         |> Command.RawCommand
         |> CreateProcess.fromCommand
         |> Proc.start
