@@ -207,7 +207,9 @@ module Steps =
                 ctx.MainProject.File
             ]
 
-    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects`` (ctx: InitProjectContext) =
+    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects``
+        (ctx: InitProjectContext)
+        =
         let fixProjectFile (path: string) =
             let xDoc = path |> XDocument.Load
             let propertyGroup = xDoc.Root.Element("PropertyGroup")
