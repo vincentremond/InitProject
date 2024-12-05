@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="paket.references" />
+    <Compile Include="FeatureFlags.fs" />
     <Compile Include="Common.fs" />
     <Compile Include="InitProjectContext.fs" />
     <Compile Include="Tools.fs" />
