@@ -57,9 +57,7 @@ module Steps =
         ]
 
     let ``Install dotnet tool fantomas`` (ctx: InitProjectContext) =
-        if FeatureFlags.fantomasDisabled then
-            printfn "Skipping fantomas installation"
-        else if ctx.Language = FSharp then
+        if ctx.Language = FSharp then
             DotNetCli.exec "tool" [
                 "install"
                 "fantomas"
@@ -209,7 +207,9 @@ module Steps =
                 ctx.MainProject.File
             ]
 
-    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects`` (ctx: InitProjectContext) =
+    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects``
+        (ctx: InitProjectContext)
+        =
         let fixProjectFile (path: string) =
             let xDoc = path |> XDocument.Load
             let propertyGroup = xDoc.Root.Element("PropertyGroup")
@@ -253,8 +253,7 @@ module Steps =
                 "fsharp_max_array_or_list_number_of_items = 1"
             ]
 
-            if not FeatureFlags.fantomasDisabled then
-                DotNetCli.exec "fantomas" [ "." ]
+            DotNetCli.exec "fantomas" [ "." ]
 
     let ``Create .build folder to sln`` (initProjectContext: InitProjectContext) =
         let folderProjectTypeGuid =
