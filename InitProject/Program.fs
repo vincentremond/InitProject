@@ -25,7 +25,7 @@ let cliParser =
 let main args =
 
     run
-        "QuickStart"
+        "InitProject"
         cliParser
         args
         (fun _ args ->
