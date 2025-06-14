@@ -222,9 +222,7 @@ module Steps =
             propertyGroup.Add(XElement("AppendTargetFrameworkToOutputPath", false))
 
             if ctx.Language = FSharp then
-                xDoc.Root
-                    .Element("ItemGroup")
-                    .AddFirst(XElement("None", [ XAttribute("Include", "paket.references") ]))
+                xDoc.Root.Element("ItemGroup").AddFirst(XElement("None", [ XAttribute("Include", "paket.references") ]))
 
             xDoc.Save(path)
 
