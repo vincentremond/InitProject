@@ -54,6 +54,7 @@ module Steps =
         DotNetCli.exec "tool" [
             "install"
             "paket"
+            "--prerelease"
         ]
 
     let ``Install dotnet tool fantomas`` (ctx: InitProjectContext) =
