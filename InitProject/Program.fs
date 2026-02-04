@@ -47,7 +47,7 @@ let main args =
                     ===> <@ ``Install dotnet tool paket`` ctx @>
                     ===> <@ ``Install dotnet tool fantomas`` ctx @>
                     ===> <@ ``Init paket`` ctx @>
-                    ===> <@ ``Create sln`` ctx @>
+                    ===> <@ ``Create solution file`` ctx @>
                     ===> <@ ``Create main project`` ctx @>
                     ===> <@ ``Create test project`` ctx @>
                     ===> <@ ``Add reference to main project on test project`` ctx @>
@@ -56,7 +56,7 @@ let main args =
                             ctx
                     @>
                     ===> <@ ``Create editorconfig file and apply config`` ctx @>
-                    ===> <@ ``Create .build folder to sln`` ctx @>
+                    ===> <@ ``Create .build folder to slnx`` ctx @>
                     ===> <@ ``Add license file`` ctx @>
                     ===> <@ ``Open rider`` ctx @>
                 )

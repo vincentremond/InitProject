@@ -1,7 +1,9 @@
 ﻿namespace InitProject
 
 open System
+open System.IO
 open System.Runtime.CompilerServices
+open System.Xml
 open System.Xml.Linq
 open Fake.Core
 open Fake.DotNet
@@ -86,6 +88,16 @@ module Seq =
 [<RequireQualifiedAccess>]
 module XDocument =
     let load (path: string) = XDocument.Load(path)
+
+    let saveWithoutDeclaration (xDoc: XDocument) (filePath: string) =
+        use writer = new StreamWriter(filePath, false, System.Text.Encoding.UTF8)
+
+        let settings = XmlWriterSettings()
+        settings.OmitXmlDeclaration <- true
+        settings.Indent <- true
+
+        use xmlWriter = XmlWriter.Create(writer, settings)
+        xDoc.Save(xmlWriter)
 
 [<RequireQualifiedAccess>]
 module XContainer =

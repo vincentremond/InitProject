@@ -1,17 +1,18 @@
 ﻿namespace InitProject
 
-open Fake.IO.FileSystemOperators
+open System
+open System.IO
 
 type ProjectFile = {
     Name: string
-    Folder: string
-    File: string
-    ProgramFile: string
+    Folder: DirectoryInfo
+    File: FileInfo
+    ProgramFile: FileInfo
 }
 
 type InitProjectContext = {
     Language: Language
-    TargetFolder: string
+    TargetFolder: DirectoryInfo
     ProjectName: string
     NoTestProject: bool
 } with
@@ -28,19 +29,19 @@ type InitProjectContext = {
 
     // get properties
     member this.Solution = {|
-        Name = this.ProjectName
         Folder = this.TargetFolder
-        File = this.TargetFolder </> $"{this.ProjectName}.sln"
+        File = this.TargetFolder </?> $"{this.ProjectName}.slnx"
     |}
 
     member this.MainProject = {
         Name = this.ProjectName
-        Folder = this.TargetFolder </> this.ProjectName
+        Folder = this.TargetFolder <//?> this.ProjectName
         File =
-            this.TargetFolder
-            </> this.ProjectName
-            </> $"{this.ProjectName}{this.ProjectExtension}"
-        ProgramFile = this.TargetFolder </> this.ProjectName </> $"Program{this.SourceFileExtension}"
+            this.TargetFolder <//?> this.ProjectName
+            </?> $"{this.ProjectName}{this.ProjectExtension}"
+        ProgramFile =
+            this.TargetFolder <//?> this.ProjectName
+            </?> $"Program{this.SourceFileExtension}"
     }
 
     member this.TestProject =
@@ -49,28 +50,26 @@ type InitProjectContext = {
         else
             Some {
                 Name = $"{this.ProjectName}.Tests"
-                Folder = this.TargetFolder </> $"{this.ProjectName}.Tests"
+                Folder = this.TargetFolder <//?> $"{this.ProjectName}.Tests"
                 File =
-                    this.TargetFolder
-                    </> $"{this.ProjectName}.Tests"
-                    </> $"{this.ProjectName}.Tests{this.ProjectExtension}"
+                    this.TargetFolder <//?> $"{this.ProjectName}.Tests"
+                    </?> $"{this.ProjectName}.Tests{this.ProjectExtension}"
                 ProgramFile =
-                    this.TargetFolder
-                    </> $"{this.ProjectName}.Tests"
-                    </> $"Program{this.SourceFileExtension}"
+                    this.TargetFolder <//?> $"{this.ProjectName}.Tests"
+                    </?> $"Program{this.SourceFileExtension}"
             }
 
     static member fromCliArguments(args: CliArguments) =
         let target =
             match args.ProjectName with
             | Some projectName -> projectName
-            | None -> System.Environment.CurrentDirectory
+            | None -> Environment.CurrentDirectory
 
-        let info = System.IO.DirectoryInfo(target)
+        let info = DirectoryInfo(target)
 
         {
             Language = args.Language
             NoTestProject = args.NoTestProject
-            TargetFolder = info.FullName
+            TargetFolder = info
             ProjectName = info.Name
         }

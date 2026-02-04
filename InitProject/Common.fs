@@ -1,6 +1,12 @@
 ﻿namespace InitProject
 
+open System.IO
 open Fake.DotNet
+
+[<AutoOpen>]
+module PathOperators =
+    let (<//?>) (d: DirectoryInfo) (sd: string) = Path.Join(d.FullName, sd) |> DirectoryInfo
+    let (</?>) (d: DirectoryInfo) (f: string) = Path.Join(d.FullName, f) |> FileInfo
 
 type Language =
     | FSharp

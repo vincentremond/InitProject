@@ -1,6 +1,8 @@
 ﻿namespace InitProject
 
 open System
+open System.IO
+open System.Xml
 open System.Xml.Linq
 open Fake.Core
 open Fake.DotNet
@@ -15,17 +17,17 @@ module Steps =
 
     let ``io: Create target directory`` (initProjectContext: InitProjectContext) =
         Trace.tracefn $"Creating target directory {initProjectContext.Solution.Folder}"
-        Directory.ensure initProjectContext.Solution.Folder
+        Directory.ensure initProjectContext.Solution.Folder.FullName
 
         Trace.tracefn $"Setting current directory to {initProjectContext.Solution.Folder}"
-        Environment.CurrentDirectory <- initProjectContext.Solution.Folder
+        Environment.CurrentDirectory <- initProjectContext.Solution.Folder.FullName
 
     let ``git: Init repository`` (initProjectContext: InitProjectContext) =
         Trace.tracefn $"Initializing git repository"
         let bare = false
         let shared = false
-        Repository.init initProjectContext.Solution.Folder bare shared
-        Branches.checkout initProjectContext.Solution.Folder true "main"
+        Repository.init initProjectContext.Solution.Folder.FullName bare shared
+        Branches.checkout initProjectContext.Solution.Folder.FullName true "main"
 
     let ``Add .gitignore`` (_: InitProjectContext) =
         DotNetCli.exec "new" [ "gitignore" ]
@@ -42,10 +44,10 @@ module Steps =
 
     let ``io: Create README.md`` (initProjectContext: InitProjectContext) =
         [
-            $"# {initProjectContext.Solution.Name}"
+            $"# {initProjectContext.ProjectName}"
             ""
         ]
-        |> File.writeNew (initProjectContext.Solution.Folder </> "README.md")
+        |> File.writeNew (initProjectContext.Solution.Folder.FullName </> "README.md")
 
     let ``Init dotnet tool-manifest`` (_: InitProjectContext) =
         DotNetCli.exec "new" [ "tool-manifest" ]
@@ -64,11 +66,13 @@ module Steps =
                 "fantomas"
             ]
 
-    let ``Create sln`` (initProjectContext: InitProjectContext) =
+    let ``Create solution file`` (initProjectContext: InitProjectContext) =
         DotNetCli.exec "new" [
             "sln"
             "--name"
-            initProjectContext.Solution.Name
+            initProjectContext.ProjectName
+            "--format"
+            "slnx"
         ]
 
     let ``Init paket`` (ctx: InitProjectContext) =
@@ -114,7 +118,7 @@ module Steps =
 
         DotNetCli.exec "sln" [
             "add"
-            ctx.MainProject.File
+            ctx.MainProject.File.FullName
         ]
 
         if ctx.Language = FSharp then
@@ -122,7 +126,7 @@ module Steps =
                 "add"
                 "FSharp.Core"
                 "--project"
-                ctx.MainProject.File
+                ctx.MainProject.File.FullName
             ]
 
     let ``Create test project`` (ctx: InitProjectContext) =
@@ -139,7 +143,7 @@ module Steps =
 
             DotNetCli.exec "sln" [
                 "add"
-                testProject.File
+                testProject.File.FullName
             ]
 
             if ctx.Language = FSharp then
@@ -147,12 +151,12 @@ module Steps =
                     "add"
                     "FSharp.Core"
                     "--project"
-                    testProject.File
+                    testProject.File.FullName
                     "--group"
                     "Tests"
                 ]
 
-            let xDoc = testProject.File |> XDocument.load
+            let xDoc = testProject.File.FullName |> XDocument.load
 
             printfn $"Test project loaded {testProject.File}"
 
@@ -180,10 +184,10 @@ module Steps =
 
             printfn "Removed Program.fs from Compile"
 
-            File.delete testProject.ProgramFile
+            File.delete testProject.ProgramFile.FullName
             printfn "Deleted main program file"
 
-            xDoc.Save(testProject.File)
+            xDoc.Save(testProject.File.FullName)
             printfn "Saved test project"
 
             nugetPackagesToAdd
@@ -192,7 +196,7 @@ module Steps =
                     "add"
                     package
                     "--project"
-                    testProject.File
+                    testProject.File.FullName
                     "--group"
                     "Tests"
                 ]
@@ -203,14 +207,12 @@ module Steps =
         | None -> printfn "Skipping test project reference"
         | Some testProject ->
             DotNetCli.exec "add" [
-                testProject.File
+                testProject.File.FullName
                 "reference"
-                ctx.MainProject.File
+                ctx.MainProject.File.FullName
             ]
 
-    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects``
-        (ctx: InitProjectContext)
-        =
+    let ``Add paket.references, AppendTargetFrameworkToOutputPath and enable FS0025 warning to projects`` (ctx: InitProjectContext) =
         let fixProjectFile (path: string) =
             let xDoc = path |> XDocument.Load
             let propertyGroup = xDoc.Root.Element("PropertyGroup")
@@ -232,7 +234,7 @@ module Steps =
 
     let ``Create editorconfig file and apply config`` (ctx: InitProjectContext) =
         if ctx.Language = FSharp then
-            File.writeNew (ctx.Solution.Folder </> ".editorconfig") [
+            File.writeNew (ctx.Solution.Folder.FullName </> ".editorconfig") [
                 "root = true"
                 ""
                 "[paket.*]"
@@ -254,29 +256,29 @@ module Steps =
 
             DotNetCli.exec "fantomas" [ "." ]
 
-    let ``Create .build folder to sln`` (initProjectContext: InitProjectContext) =
-        let folderProjectTypeGuid =
-            "2150E333-8FDC-42A3-9474-1A3956D46DE8" |> Guid |> Guid.toStringUC
+    let ``Create .build folder to slnx`` (initProjectContext: InitProjectContext) =
+        let solutionDoc = XDocument.Load initProjectContext.Solution.File.FullName
 
-        let projectUniqueGuid = Guid.NewGuid() |> Guid.toStringUC
+        let root = solutionDoc.Root
 
-        initProjectContext.Solution.File
-        |> File.fixFile (
-            StringList.insertManyBefore "Global" [
-                $"Project(\"%s{folderProjectTypeGuid}\") = \".build\", \".build\", \"%s{projectUniqueGuid}\""
-                "\tProjectSection(SolutionItems) = preProject"
-                "\t\t.editorconfig = .editorconfig"
-                "\t\t.gitignore = .gitignore"
-                "\t\tpaket.dependencies = paket.dependencies"
-                "\t\tpaket.lock = paket.lock"
-                "\t\tREADME.md = README.md"
-                "\tEndProjectSection"
-                "EndProject"
+        let files =
+            [
+                ".editorconfig"
+                ".gitignore"
+                "paket.dependencies"
+                "paket.lock"
+                "README.md"
             ]
-        )
+            |> List.map (fun file -> XElement("File", XAttribute("Path", file)))
+
+        let folder = XElement("Folder", XAttribute("Name", "/.build/"), files)
+
+        root.AddFirst(folder)
+
+        XDocument.saveWithoutDeclaration solutionDoc initProjectContext.Solution.File.FullName
 
     let ``Add license file`` (initProjectContext: InitProjectContext) =
-        let licenseFile = initProjectContext.Solution.Folder </> "LICENSE"
+        let licenseFile = initProjectContext.Solution.Folder.FullName </> "LICENSE"
 
         if (licenseFile |> File.exists) then
             printfn $"License file already exists {licenseFile}"

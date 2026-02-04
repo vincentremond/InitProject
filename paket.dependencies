@@ -3,6 +3,7 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: auto-detect
 
+nuget AutoBogus
 nuget coverlet.collector
 nuget Fake.Core
 nuget Fake.Core.Target
@@ -10,6 +11,7 @@ nuget Fake.DotNet.Cli
 nuget Fake.Tools.Git
 nuget Fargo.CmdLine
 nuget FSharp.Quotations.Evaluator
+nuget FsUnit
 nuget Microsoft.NET.Test.Sdk
 nuget NUnit
 nuget NUnit.Analyzers
