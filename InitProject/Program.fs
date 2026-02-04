@@ -31,7 +31,7 @@ let main args =
         (fun _ args ->
             task {
                 []
-                |> Context.FakeExecutionContext.Create false "InitProject.exe"
+                |> Context.FakeExecutionContext.Create false "InitProject"
                 |> Context.RuntimeContext.Fake
                 |> Context.setExecutionContext
 
