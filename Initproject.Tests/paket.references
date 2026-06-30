@@ -1,2 +1,7 @@
 AutoBogus
+coverlet.collector
 FsUnit
+Microsoft.NET.Test.Sdk
+NUnit
+NUnit.Analyzers
+NUnit3TestAdapter
