@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/.build/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="build.ps1" />
+    <File Path="paket.dependencies" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Initproject.Tests/Initproject.Tests.fsproj" />
+  <Project Path="InitProject/InitProject.fsproj" />
+</Solution>
